@@ -1,0 +1,1230 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PrivateSuite Banking — Alexandra M. Whitmore</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+    rel="stylesheet"
+  />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <style>
+    /* ── Tokens ──────────────────────────────────────────────────────────────── */
+    :root {
+      --bg:            #edf0f8;
+      --surface:       #ffffff;
+      --surface-alt:   #f6f8fd;
+      --border:        #dde3f0;
+      --border-faint:  #ecf0f9;
+
+      --text-1:        #0d1424;
+      --text-2:        #47566c;
+      --text-3:        #8898b2;
+
+      --accent:        #1741a8;
+      --accent-hover:  #1133a0;
+      --accent-light:  #dce9ff;
+
+      --green:         #087852;
+      --green-bg:      #eafaf4;
+      --red:           #be1e2d;
+      --red-bg:        #fff0f1;
+      --amber:         #994f00;
+      --amber-bg:      #fff7e0;
+      --blue:          #1854d8;
+      --blue-bg:       #eff5ff;
+
+      --radius:        8px;
+      --radius-lg:     12px;
+
+      --font-ui:       'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+      --font-display:  'Libre Baskerville', Georgia, serif;
+      --font-mono:     'IBM Plex Mono', 'Courier New', monospace;
+
+      --header-h:      58px;
+      --nav-h:         46px;
+    }
+
+    /* ── Reset ───────────────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html   { font-family: var(--font-ui); font-size: 14px; color: var(--text-1); background: var(--bg); }
+    body   { min-height: 100vh; display: flex; flex-direction: column; }
+    button { cursor: pointer; font-family: inherit; font-size: inherit; }
+    table  { border-collapse: collapse; width: 100%; }
+    a      { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ── App Shell ───────────────────────────────────────────────────────────── */
+    #app-shell { display: flex; flex-direction: column; min-height: 100vh; }
+
+    /* ── Header ──────────────────────────────────────────────────────────────── */
+    #app-header {
+      position: sticky; top: 0; z-index: 200;
+      height: var(--header-h);
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center;
+      padding: 0 28px; gap: 18px;
+    }
+
+    #header-brand       { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    #header-brand-logo  {
+      width: 32px; height: 32px; border-radius: 6px;
+      background: var(--accent); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-display); font-size: 15px; font-weight: 700;
+    }
+    #header-brand-name  { font-family: var(--font-display); font-size: 16px; font-weight: 700; letter-spacing: -0.01em; }
+
+    #header-spacer      { flex: 1; }
+
+    #header-user-block  { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+    #header-user-name   { font-size: 13px; font-weight: 600; }
+    #header-user-meta   { font-size: 11px; color: var(--text-3); }
+
+    #header-controls    { display: flex; align-items: center; gap: 8px; }
+
+    /* Sensitive toggle */
+    #btn-sensitive-toggle {
+      height: 32px; padding: 0 14px;
+      border-radius: var(--radius); border: 1px solid var(--border);
+      background: var(--surface); color: var(--text-2);
+      font-size: 12px; font-weight: 500; transition: all .15s;
+    }
+    #btn-sensitive-toggle:hover        { border-color: var(--accent); color: var(--accent); }
+    #btn-sensitive-toggle.active-state { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+
+    /* ── Dropdown ────────────────────────────────────────────────────────────── */
+    .dropdown          { position: relative; }
+    .dropdown-panel    {
+      position: absolute; top: calc(100% + 8px); right: 0;
+      min-width: 210px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 8px 24px rgba(0,0,0,.12);
+      padding: 6px;
+      opacity: 0; visibility: hidden; transform: translateY(-6px);
+      transition: all .18s; z-index: 500;
+    }
+    .dropdown.is-open .dropdown-panel { opacity: 1; visibility: visible; transform: translateY(0); }
+
+    .dropdown-header {
+      padding: 10px 12px 8px;
+      border-bottom: 1px solid var(--border-faint); margin-bottom: 4px;
+    }
+    .dropdown-header-name  { font-size: 13px; font-weight: 600; }
+    .dropdown-header-sub   { font-size: 11px; color: var(--text-3); font-family: var(--font-mono); }
+
+    .dropdown-action {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 12px; border-radius: 6px;
+      color: var(--text-1); font-size: 13px;
+      cursor: pointer; width: 100%; border: none; background: none; text-align: left;
+      transition: background .1s;
+    }
+    .dropdown-action:hover  { background: var(--surface-alt); }
+    .dropdown-action.danger { color: var(--red); }
+    .dropdown-action .icon  { width: 18px; text-align: center; color: var(--text-3); }
+    .dropdown-action.danger .icon { color: var(--red); }
+
+    #btn-user-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: var(--accent); color: #fff; border: none;
+      font-size: 11px; font-weight: 700; letter-spacing: .06em;
+    }
+    .dropdown-sep { height: 1px; background: var(--border-faint); margin: 4px 0; }
+
+    /* ── Navigation ──────────────────────────────────────────────────────────── */
+    #app-nav {
+      position: sticky; top: var(--header-h); z-index: 100;
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      display: flex; align-items: stretch; justify-content: space-between;
+      padding: 0 28px;
+    }
+
+    #nav-tab-group { display: flex; align-items: stretch; }
+
+    .nav-tab {
+      height: var(--nav-h); padding: 0 18px;
+      border: none; background: none; color: var(--text-2);
+      font-size: 13px; font-weight: 500;
+      border-bottom: 2px solid transparent;
+      transition: all .15s; white-space: nowrap;
+    }
+    .nav-tab:hover    { color: var(--text-1); }
+    .nav-tab.is-active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+
+    #nav-actions-group { display: flex; align-items: center; gap: 10px; }
+
+    #btn-quick-actions {
+      height: 32px; padding: 0 16px;
+      border-radius: var(--radius); border: none;
+      background: var(--accent); color: #fff;
+      font-size: 12px; font-weight: 600;
+      display: flex; align-items: center; gap: 6px;
+    }
+    #btn-quick-actions:hover { background: var(--accent-hover); }
+    #quick-actions-panel { right: 0; min-width: 230px; }
+
+    /* ── Main ────────────────────────────────────────────────────────────────── */
+    #app-main        { flex: 1; padding: 32px 28px; max-width: 1140px; width: 100%; margin: 0 auto; }
+
+    .page-section    { display: none; }
+    .page-section.is-active { display: block; }
+
+    /* ── Section Header ──────────────────────────────────────────────────────── */
+    .section-hd       { margin-bottom: 24px; }
+    .section-title    { font-family: var(--font-display); font-size: 22px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 4px; }
+    .section-subtitle { font-size: 12px; color: var(--text-3); }
+
+    /* ── Stat Cards ──────────────────────────────────────────────────────────── */
+    .stat-row   { display: grid; gap: 16px; margin-bottom: 28px; }
+    .cols-4     { grid-template-columns: repeat(4, 1fr); }
+    .cols-3     { grid-template-columns: repeat(3, 1fr); }
+    .cols-2     { grid-template-columns: repeat(2, 1fr); }
+
+    .stat-card  { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 18px 20px; }
+    .stat-value { font-size: 20px; font-weight: 700; font-family: var(--font-mono); line-height: 1.1; margin-bottom: 4px; }
+    .stat-label { font-size: 11px; color: var(--text-3); font-weight: 500; text-transform: uppercase; letter-spacing: .05em; }
+    .clr-green  { color: var(--green); }
+    .clr-red    { color: var(--red); }
+    .clr-blue   { color: var(--blue); }
+    .clr-amber  { color: var(--amber); }
+
+    /* ── Chart Cards ─────────────────────────────────────────────────────────── */
+    .charts-duo   { display: grid; grid-template-columns: 1fr 330px; gap: 24px; margin-bottom: 28px; }
+    .chart-card   { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px 24px; }
+    .chart-title  { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+    .chart-sub    { font-size: 11px; color: var(--text-3); margin-bottom: 16px; }
+    .chart-wrap   { position: relative; }
+
+    /* ── Divider ─────────────────────────────────────────────────────────────── */
+    .rule { height: 1px; background: var(--border); margin: 24px 0; }
+
+    /* ── Content Block ───────────────────────────────────────────────────────── */
+    .content-block    { margin-bottom: 32px; }
+    .block-title      { font-size: 15px; font-weight: 600; margin-bottom: 12px; }
+    .block-subtitle   { font-size: 11px; color: var(--text-3); margin-bottom: 12px; }
+
+    /* ── Data Table ──────────────────────────────────────────────────────────── */
+    .table-frame  { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+
+    .data-tbl     { width: 100%; border-collapse: collapse; }
+    .data-tbl thead th {
+      background: var(--surface-alt);
+      text-align: left; padding: 10px 14px;
+      font-size: 11px; font-weight: 600; color: var(--text-3);
+      text-transform: uppercase; letter-spacing: .06em;
+      border-bottom: 1px solid var(--border);
+    }
+    .data-tbl thead th.col-r  { text-align: right; }
+    .data-tbl tbody tr        { border-bottom: 1px solid var(--border-faint); }
+    .data-tbl tbody tr:last-child  { border-bottom: none; }
+    .data-tbl tbody tr:hover       { background: #f4f7fd; }
+    .data-tbl tbody tr.row-stripe  { background: var(--surface-alt); }
+    .data-tbl tbody tr.row-stripe:hover { background: #eef3fc; }
+    .data-tbl tbody td { padding: 11px 14px; font-size: 13px; vertical-align: middle; }
+    .data-tbl tbody td.col-r { text-align: right; }
+    .data-tbl tbody td.font-mono { font-family: var(--font-mono); font-size: 12px; }
+
+    .tone-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+    .dot-green  { background: var(--green); }
+    .dot-red    { background: var(--red); }
+    .dot-amber  { background: var(--amber); }
+    .dot-neutral{ background: var(--text-3); }
+
+    .amt-up     { color: var(--green); font-weight: 500; }
+
+    /* ── Badge ───────────────────────────────────────────────────────────────── */
+    .badge {
+      display: inline-flex; align-items: center;
+      padding: 2px 8px; border-radius: 100px;
+      font-size: 11px; font-weight: 600; letter-spacing: .02em;
+    }
+    .badge-green  { background: var(--green-bg); color: var(--green); }
+    .badge-red    { background: var(--red-bg);   color: var(--red); }
+    .badge-amber  { background: var(--amber-bg); color: var(--amber); }
+    .badge-blue   { background: var(--blue-bg);  color: var(--blue); }
+    .badge-neutral{ background: var(--border-faint); color: var(--text-2); }
+
+    /* ── Filter Pills ────────────────────────────────────────────────────────── */
+    .filter-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+    .f-pill {
+      height: 28px; padding: 0 12px; border-radius: 100px;
+      border: 1px solid var(--border); background: var(--surface);
+      color: var(--text-2); font-size: 12px; font-weight: 500;
+      cursor: pointer; transition: all .1s;
+    }
+    .f-pill:hover    { border-color: var(--accent); color: var(--accent); }
+    .f-pill.selected { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+    /* ── Account Cards ───────────────────────────────────────────────────────── */
+    .acct-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 14px; overflow: hidden; }
+
+    .acct-card-hd {
+      display: flex; align-items: center; gap: 14px;
+      padding: 16px 20px; cursor: pointer; user-select: none;
+    }
+    .acct-card-hd:hover { background: var(--surface-alt); }
+
+    .acct-icon-bubble {
+      width: 40px; height: 40px; border-radius: var(--radius);
+      background: var(--accent-light); color: var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
+    }
+
+    .acct-hd-info { flex: 1; }
+    .acct-hd-type { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+    .acct-hd-num  { font-size: 12px; color: var(--text-3); font-family: var(--font-mono); }
+
+    .acct-hd-right     { display: flex; align-items: center; gap: 14px; }
+    .acct-hd-balance   { font-family: var(--font-mono); font-size: 16px; font-weight: 700; }
+    .acct-hd-bal-neg   { color: var(--red); }
+
+    .acct-chevron      { color: var(--text-3); font-size: 11px; transition: transform .2s; }
+    .acct-card.is-open .acct-chevron { transform: rotate(180deg); }
+
+    .acct-card-body    { border-top: 1px solid var(--border-faint); padding: 20px; display: none; }
+    .acct-card.is-open .acct-card-body { display: block; }
+
+    .acct-meta-grid    { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px 20px; margin-top: 16px; }
+    .acct-meta-item    {}
+    .acct-meta-label   { font-size: 11px; color: var(--text-3); font-weight: 500; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 3px; }
+    .acct-meta-value   { font-size: 13px; font-weight: 500; }
+    .acct-meta-value.v-mono { font-family: var(--font-mono); font-size: 12px; }
+
+    /* ── Callout ─────────────────────────────────────────────────────────────── */
+    .callout {
+      border-radius: var(--radius); padding: 14px 16px;
+      display: flex; gap: 12px; margin-bottom: 24px;
+    }
+    .callout-info    { background: var(--blue-bg);  border-left: 3px solid var(--blue); }
+    .callout-success { background: var(--green-bg); border-left: 3px solid var(--green); }
+    .callout-warning { background: var(--amber-bg); border-left: 3px solid var(--amber); }
+    .callout-danger  { background: var(--red-bg);   border-left: 3px solid var(--red); }
+    .callout-glyph   { font-size: 15px; flex-shrink: 0; padding-top: 1px; }
+    .callout-heading { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+    .callout-info    .callout-heading { color: var(--blue); }
+    .callout-warning .callout-heading { color: var(--amber); }
+    .callout-danger  .callout-heading { color: var(--red); }
+    .callout-success .callout-heading { color: var(--green); }
+    .callout-body    { font-size: 12.5px; color: var(--text-2); line-height: 1.5; }
+
+    /* ── Profile Expandable Cards ────────────────────────────────────────────── */
+    .prof-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 14px; overflow: hidden; }
+    .prof-card-hd {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 20px; cursor: pointer; user-select: none;
+      font-size: 14px; font-weight: 600;
+    }
+    .prof-card-hd:hover { background: var(--surface-alt); }
+    .prof-chevron   { color: var(--text-3); font-size: 11px; transition: transform .2s; }
+    .prof-card.is-open .prof-chevron { transform: rotate(180deg); }
+    .prof-card-body { border-top: 1px solid var(--border-faint); padding: 20px; display: none; }
+    .prof-card.is-open .prof-card-body { display: block; }
+
+    .info-grid  { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px 24px; }
+    .info-lbl   { font-size: 11px; color: var(--text-3); font-weight: 500; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
+    .info-val   { font-size: 13px; font-weight: 500; }
+    .info-val.v-large { font-size: 14px; font-weight: 600; }
+    .info-val.v-mono  { font-family: var(--font-mono); font-size: 12px; }
+
+    /* ── Investments Layout ──────────────────────────────────────────────────── */
+    .invest-split { display: grid; grid-template-columns: 1fr 320px; gap: 24px; }
+
+    /* ── Footer ──────────────────────────────────────────────────────────────── */
+    #app-footer {
+      background: var(--surface); border-top: 1px solid var(--border);
+      padding: 14px 28px; display: flex; align-items: center; gap: 20px;
+      font-size: 11px; color: var(--text-3); flex-wrap: wrap;
+    }
+    #footer-links           { display: flex; gap: 16px; }
+    #footer-links a         { color: var(--text-3); }
+    #footer-links a:hover   { color: var(--text-1); }
+    #footer-secure          { margin-left: auto; }
+  </style>
+  <script>
+    window['_fs_host'] = 'fullstory.com';
+    window['_fs_script'] = 'edge.fullstory.com/s/fs.js';
+    window['_fs_org'] = 'o-22A22E-na1';
+    window['_fs_namespace'] = 'FS';
+    !function(m,n,e,t,l,o,g,y){var s,f,a=function(h){
+    return!(h in m)||(m.console&&m.console.log&&m.console.log('FullStory namespace conflict. Please set window["_fs_namespace"].'),!1)}(e)
+    ;function p(b){var h,d=[];function j(){h&&(d.forEach((function(b){var d;try{d=b[h[0]]&&b[h[0]](h[1])}catch(h){return void(b[3]&&b[3](h))}
+    d&&d.then?d.then(b[2],b[3]):b[2]&&b[2](d)})),d.length=0)}function r(b){return function(d){h||(h=[b,d],j())}}return b(r(0),r(1)),{
+    then:function(b,h){return p((function(r,i){d.push([b,h,r,i]),j()}))}}}a&&(g=m[e]=function(){var b=function(b,d,j,r){function i(i,c){
+    h(b,d,j,i,c,r)}r=r||2;var c,u=/Async$/;return u.test(b)?(b=b.replace(u,""),"function"==typeof Promise?new Promise(i):p(i)):h(b,d,j,c,c,r)}
+    ;function h(h,d,j,r,i,c){return b._api?b._api(h,d,j,r,i,c):(b.q&&b.q.push([h,d,j,r,i,c]),null)}return b.q=[],b}(),y=function(b){function h(h){
+    "function"==typeof h[4]&&h[4](new Error(b))}var d=g.q;if(d){for(var j=0;j<d.length;j++)h(d[j]);d.length=0,d.push=h}},function(){
+    (o=n.createElement(t)).async=!0,o.crossOrigin="anonymous",o.src="https://"+l,o.onerror=function(){y("Error loading "+l)}
+    ;var b=n.getElementsByTagName(t)[0];b&&b.parentNode?b.parentNode.insertBefore(o,b):n.head.appendChild(o)}(),function(){function b(){}
+    function h(b,h,d){g(b,h,d,1)}function d(b,d,j){h("setProperties",{type:b,properties:d},j)}function j(b,h){d("user",b,h)}function r(b,h,d){j({
+    uid:b},d),h&&j(h,d)}g.identify=r,g.setUserVars=j,g.identifyAccount=b,g.clearUserCookie=b,g.setVars=d,g.event=function(b,d,j){h("trackEvent",{
+    name:b,properties:d},j)},g.anonymize=function(){r(!1)},g.shutdown=function(){h("shutdown")},g.restart=function(){h("restart")},
+    g.log=function(b,d){h("log",{level:b,msg:d})},g.consent=function(b){h("setIdentity",{consent:!arguments.length||b})}}(),s="fetch",
+    f="XMLHttpRequest",g._w={},g._w[f]=m[f],g._w[s]=m[s],m[s]&&(m[s]=function(){return g._w[s].apply(this,arguments)}),g._v="2.0.0")
+    }(window,document,window._fs_namespace,"script",window._fs_script);
+  </script>
+  
+</head>
+<body>
+<div id="app-shell">
+
+  <!-- ════════════════════════════════ HEADER ════════════════════════════════ -->
+  <header id="app-header">
+
+    <div id="header-brand">
+      <div id="header-brand-logo">P</div>
+      <span id="header-brand-name">PrivateSuite</span>
+    </div>
+
+    <div id="header-spacer"></div>
+
+    <div id="header-user-block">
+      <span id="header-user-name">Alexandra M. Whitmore</span>
+      <span id="header-user-meta">PBC-8842-9023 &middot; Last login: Jun 10, 2026 &nbsp;6:42 AM CT</span>
+    </div>
+
+    <div id="header-controls">
+      <button id="btn-sensitive-toggle" onclick="toggleSensitive()">&#128065; Reveal Sensitive</button>
+
+      <!-- User Avatar Dropdown -->
+      <div class="dropdown" id="dd-user">
+        <button id="btn-user-avatar" class="dropdown-trigger" onclick="toggleDropdown('dd-user')">AW</button>
+        <div class="dropdown-panel" id="dd-user-panel">
+          <div class="dropdown-header">
+            <div class="dropdown-header-name">Alexandra M. Whitmore</div>
+            <div class="dropdown-header-sub">PBC-8842-9023 &middot; Platinum Tier</div>
+          </div>
+          <button class="dropdown-action" onclick="goTo('profile'); closeAllDropdowns()">
+            <span class="icon">&#128100;</span> View Profile
+          </button>
+          <button class="dropdown-action" onclick="goTo('profile'); closeAllDropdowns()">
+            <span class="icon">&#9881;</span> Account Settings
+          </button>
+          <button class="dropdown-action" onclick="closeAllDropdowns()">
+            <span class="icon">&#128274;</span> Security &amp; 2FA
+          </button>
+          <button class="dropdown-action" onclick="closeAllDropdowns()">
+            <span class="icon">&#128276;</span> Notifications
+          </button>
+          <button class="dropdown-action" onclick="closeAllDropdowns()">
+            <span class="icon">&#128196;</span> Statements &amp; Docs
+          </button>
+          <div class="dropdown-sep"></div>
+          <button class="dropdown-action danger" onclick="closeAllDropdowns()">
+            <span class="icon">&#10132;</span> Sign Out
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════ NAVIGATION ══════════════════════════════ -->
+  <nav id="app-nav">
+
+    <div id="nav-tab-group">
+      <button class="nav-tab is-active" data-section="dashboard"    onclick="goTo('dashboard')">Dashboard</button>
+      <button class="nav-tab"           data-section="accounts"     onclick="goTo('accounts')">Accounts</button>
+      <button class="nav-tab"           data-section="transactions" onclick="goTo('transactions')">Transactions</button>
+      <button class="nav-tab"           data-section="investments"  onclick="goTo('investments')">Investments</button>
+      <button class="nav-tab"           data-section="payments"     onclick="goTo('payments')">Payments</button>
+      <button class="nav-tab"           data-section="profile"      onclick="goTo('profile')">Profile &amp; Settings</button>
+    </div>
+
+    <div id="nav-actions-group">
+      <div class="dropdown" id="dd-quickactions">
+        <button id="btn-quick-actions" class="dropdown-trigger" onclick="toggleDropdown('dd-quickactions')">
+          Quick Actions &#9662;
+        </button>
+        <div class="dropdown-panel" id="quick-actions-panel">
+          <button class="dropdown-action" onclick="closeAllDropdowns()"><span class="icon">&#8646;</span> Transfer Funds</button>
+          <button class="dropdown-action" onclick="goTo('payments'); closeAllDropdowns()"><span class="icon">&#128179;</span> Pay a Bill</button>
+          <button class="dropdown-action" onclick="closeAllDropdowns()"><span class="icon">&#128196;</span> Download Statement</button>
+          <button class="dropdown-action" onclick="closeAllDropdowns()"><span class="icon">&#128247;</span> Mobile Check Deposit</button>
+          <button class="dropdown-action" onclick="closeAllDropdowns()"><span class="icon">&#128260;</span> Wire Transfer</button>
+          <div class="dropdown-sep"></div>
+          <button class="dropdown-action" onclick="closeAllDropdowns()"><span class="icon">&#128222;</span> Call Advisor: (312) 555-0240</button>
+          <button class="dropdown-action" onclick="closeAllDropdowns()"><span class="icon">&#128205;</span> Find a Branch</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ════════════════════════════════ MAIN ═════════════════════════════════ -->
+  <main id="app-main">
+
+    <!-- ─────────────────── DASHBOARD ─────────────────── -->
+    <section id="section-dashboard" class="page-section is-active">
+      <div class="section-hd">
+        <h1 class="section-title">Financial Overview</h1>
+        <p class="section-subtitle">As of June 10, 2026 &middot; All balances are indicative only</p>
+      </div>
+
+      <div class="stat-row cols-4" id="dashboard-stat-row"></div>
+
+      <div class="charts-duo">
+        <div class="chart-card" id="chart-cashflow-card">
+          <div class="chart-title">Cash Flow &mdash; Last 6 Months</div>
+          <div class="chart-sub">Income vs. expenses &middot; Jan &ndash; Jun 2026 &middot; All accounts</div>
+          <div class="chart-wrap" style="height:220px"><canvas id="chart-cashflow"></canvas></div>
+        </div>
+        <div class="chart-card" id="chart-spending-card">
+          <div class="chart-title">June Spending</div>
+          <div class="chart-sub">By category &middot; June 2026</div>
+          <div class="chart-wrap" style="height:220px"><canvas id="chart-spending"></canvas></div>
+        </div>
+      </div>
+
+      <div class="content-block" id="dashboard-accounts-block">
+        <div class="block-title">Account Summary</div>
+        <div class="table-frame" id="dashboard-acct-tbl"></div>
+      </div>
+
+      <div class="content-block" id="dashboard-txns-block">
+        <div class="block-title">Recent Transactions</div>
+        <div class="table-frame" id="dashboard-txn-tbl"></div>
+      </div>
+
+      <div class="callout callout-warning" id="dashboard-tax-alert">
+        <div class="callout-glyph">&#9888;</div>
+        <div>
+          <div class="callout-heading">Action Required &mdash; June 15 Deadline</div>
+          <div class="callout-body">Illinois State Q2 Estimated Tax of <strong>$12,850.00</strong> is due June 15, 2026. Contact advisor Michael Chen at (312)&nbsp;555-0240 to confirm ACH transfer from checking ****-9023.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─────────────────── ACCOUNTS ─────────────────── -->
+    <section id="section-accounts" class="page-section">
+      <div class="section-hd">
+        <h1 class="section-title">Accounts</h1>
+        <p class="section-subtitle">All accounts linked to Client ID PBC-8842-9023 &middot; ABA Routing Reference: 071000013</p>
+      </div>
+      <div id="accounts-cards-list"></div>
+    </section>
+
+    <!-- ─────────────────── TRANSACTIONS ─────────────────── -->
+    <section id="section-transactions" class="page-section">
+      <div class="section-hd">
+        <h1 class="section-title">Transaction History</h1>
+        <p class="section-subtitle">May &ndash; June 2026 &middot; All linked accounts &middot; 18 transactions shown</p>
+      </div>
+
+      <div class="stat-row cols-3" id="txn-stat-row"></div>
+
+      <div class="content-block" id="txn-filter-block">
+        <div class="block-title">Filter by Category</div>
+        <div class="filter-pills" id="txn-filter-pills"></div>
+        <div class="table-frame" id="txn-table-frame"></div>
+      </div>
+    </section>
+
+    <!-- ─────────────────── INVESTMENTS ─────────────────── -->
+    <section id="section-investments" class="page-section">
+      <div class="section-hd">
+        <h1 class="section-title">Investment Portfolio</h1>
+        <p class="section-subtitle">Account INV-2247-8814 &middot; PrivateSuite Wealth Management &middot; As of Jun 10, 2026 &middot; 4:00 PM ET close</p>
+      </div>
+
+      <div class="stat-row cols-4" id="invest-stat-row"></div>
+
+      <div class="rule"></div>
+
+      <div class="invest-split" id="invest-main-split">
+        <div id="invest-holdings-block">
+          <div class="block-title">Holdings</div>
+          <div class="table-frame" id="invest-holdings-tbl"></div>
+        </div>
+        <div id="invest-alloc-block">
+          <div class="chart-card">
+            <div class="chart-title">Allocation</div>
+            <div class="chart-sub">By market value</div>
+            <div class="chart-wrap" style="height:280px"><canvas id="chart-allocation"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rule"></div>
+
+      <div class="content-block" id="invest-ytd-block">
+        <div class="block-title">Portfolio Performance &mdash; Year to Date</div>
+        <div class="block-subtitle">Estimated total value &middot; Jan &ndash; Jun 2026 &middot; Source: PrivateSuite Wealth</div>
+        <div class="chart-card">
+          <div class="chart-wrap" style="height:200px"><canvas id="chart-portfolio-ytd"></canvas></div>
+        </div>
+      </div>
+
+      <div class="callout callout-info" id="invest-tax-callout">
+        <div class="callout-glyph">&#8505;</div>
+        <div>
+          <div class="callout-heading">Year-End Tax Planning</div>
+          <div class="callout-body">You have <strong>$28,042.10</strong> in unrealized long-term gains across 6 positions. Discuss tax-loss harvesting with Michael Chen before Dec 31, 2026.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─────────────────── PAYMENTS ─────────────────── -->
+    <section id="section-payments" class="page-section">
+      <div class="section-hd">
+        <h1 class="section-title">Payments &amp; Bills</h1>
+        <p class="section-subtitle">Upcoming obligations through July 2026 &middot; 7 items</p>
+      </div>
+
+      <div class="stat-row cols-3" id="payments-stat-row"></div>
+
+      <div class="callout callout-warning" id="payments-manual-alert">
+        <div class="callout-glyph">&#9888;</div>
+        <div>
+          <div class="callout-heading">Two Manual Payments Required</div>
+          <div class="callout-body">Property Tax of <strong>$8,420.00</strong> (Jul 1) and Prestige Visa minimum of <strong>$145.00</strong> (Jun 25) require manual initiation. Log in or call (800) 935-9935.</div>
+        </div>
+      </div>
+
+      <div class="content-block" id="upcoming-pay-block">
+        <div class="block-title">Upcoming Payments</div>
+        <div class="table-frame" id="upcoming-pay-tbl"></div>
+      </div>
+
+      <div class="content-block" id="completed-pay-block">
+        <div class="block-title">Completed Payments &mdash; Last 90 Days</div>
+        <div class="table-frame" id="completed-pay-tbl"></div>
+      </div>
+    </section>
+
+    <!-- ─────────────────── PROFILE ─────────────────── -->
+    <section id="section-profile" class="page-section">
+      <div class="section-hd">
+        <h1 class="section-title">Profile &amp; Settings</h1>
+        <p class="section-subtitle">Private Banking Record &middot; Client ID PBC-8842-9023 &middot; Member since January 14, 2018</p>
+      </div>
+
+      <div class="callout callout-danger" id="profile-nppi-warning">
+        <div class="callout-glyph">&#128274;</div>
+        <div>
+          <div class="callout-heading">Restricted &mdash; Non-Public Personal Information</div>
+          <div class="callout-body">This record contains NPPI protected under the Gramm-Leach-Bliley Act. Access is logged and audited. Unauthorized disclosure may result in regulatory action.</div>
+        </div>
+      </div>
+
+      <!-- Personal Info -->
+      <div class="prof-card is-open" id="prof-card-personal">
+        <div class="prof-card-hd" onclick="toggleProfCard('prof-card-personal')">
+          <span>Personal Information</span>
+          <span class="prof-chevron">&#9660;</span>
+        </div>
+        <div class="prof-card-body">
+          <div class="info-grid" id="prof-personal-grid"></div>
+        </div>
+      </div>
+
+      <!-- Employment -->
+      <div class="prof-card is-open" id="prof-card-employment">
+        <div class="prof-card-hd" onclick="toggleProfCard('prof-card-employment')">
+          <span>Employment &amp; Financial Profile</span>
+          <span class="prof-chevron">&#9660;</span>
+        </div>
+        <div class="prof-card-body">
+          <div class="info-grid" id="prof-employment-grid"></div>
+        </div>
+      </div>
+
+      <!-- Advisor -->
+      <div class="prof-card is-open" id="prof-card-advisor">
+        <div class="prof-card-hd" onclick="toggleProfCard('prof-card-advisor')">
+          <span>Relationship &amp; Preferences</span>
+          <span class="prof-chevron">&#9660;</span>
+        </div>
+        <div class="prof-card-body">
+          <div class="info-grid" id="prof-advisor-grid"></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ════════════════════════════════ FOOTER ════════════════════════════════ -->
+  <footer id="app-footer">
+    <span id="footer-legal">&copy; 2026 PrivateSuite Banking, N.A. &middot; FDIC Insured &middot; Member FINRA/SIPC</span>
+    <nav id="footer-links">
+      <a href="#" id="footer-link-privacy">Privacy Policy</a>
+      <a href="#" id="footer-link-terms">Terms &amp; Conditions</a>
+      <a href="#" id="footer-link-disclosures">Disclosures</a>
+      <a href="#" id="footer-link-access">Accessibility</a>
+      <a href="#" id="footer-link-security">Security Center</a>
+    </nav>
+    <span id="footer-secure">&#128274; 256-bit SSL &middot; Session expires in 15 min</span>
+  </footer>
+
+</div><!-- #app-shell -->
+
+<script>
+  'use strict';
+
+  /* ════════════════════════════════════════════════════════════════════════════
+     DATA
+  ════════════════════════════════════════════════════════════════════════════ */
+
+  const USER = {
+    name:            'Alexandra M. Whitmore',
+    initials:        'AW',
+    role:            'Private Banking Client',
+    clientId:        'PBC-8842-9023',
+    memberSince:     'January 14, 2018',
+    email:           'a.whitmore@privatesuite.com',
+    phone:           '(312) 555-0847',
+    altPhone:        '(312) 555-2291',
+    address:         '2847 N. Lakeview Ave, Apt 4C',
+    city:            'Chicago, IL 60657',
+    country:         'United States',
+    dob:             'March 12, 1983',
+    dobMasked:       '\u25cf\u25cf/\u25cf\u25cf/1983',
+    age:             43,
+    ssn:             '***-**-4521',
+    ssnFull:         '429-88-4521',
+    driversLicense:  'W347-8219-83IL',
+    dlMasked:        'W\u25cf\u25cf\u25cf-\u25cf\u25cf\u25cf\u25cf-\u25cfIL',
+    passport:        'US 508419273',
+    passportMasked:  'US \u25cf\u25cf\u25cf\u25cf\u25cf\u25cf\u25cf\u25cf\u25cf',
+    employer:        'Whitmore Capital Management, LLC',
+    employerAddr:    '333 N. Michigan Ave, Suite 1800, Chicago, IL 60601',
+    employerPhone:   '(312) 555-0100',
+    employment:      'Self-Employed / Managing Partner',
+    income:          '$485,000',
+    incomeMasked:    '\u25cf\u25cf\u25cf,\u25cf\u25cf\u25cf',
+    taxBracket:      '37%',
+    filingStatus:    'Married Filing Jointly',
+    spouseName:      'Daniel R. Whitmore',
+    spouseSSN:       '***-**-8832',
+    spouseSSNFull:   '318-44-8832',
+    dependents:      2,
+    advisorName:     'Michael Chen',
+    advisorPhone:    '(312) 555-0240',
+    advisorEmail:    'm.chen@privatesuite.com',
+    riskTolerance:   'Moderate-Aggressive',
+    creditScore:     812,
+    netWorth:        '$2,140,000',
+    netWorthMasked:  '\u25cf,\u25cf\u25cf\u25cf,\u25cf\u25cf\u25cf',
+  };
+
+  const ACCOUNTS = [
+    {
+      id: 'acct-chk-001', icon: '&#127968;',
+      type: 'Premier Checking', number: '****-****-****-9023', fullNumber: '4821-0047-2298-9023',
+      routing: '071000013', balance: 45230.18, available: 44980.18,
+      opened: 'Jan 15, 2018', status: 'Active', institution: 'PrivateSuite Private Client',
+      extras: { 'Pending Holds': '$250.00', 'Interest YTD': '$0.00', 'Overdraft Protection': 'Linked Savings' },
+    },
+    {
+      id: 'acct-sav-002', icon: '&#128176;',
+      type: 'Platinum Savings', number: '****-****-****-4471', fullNumber: '4821-0047-2298-4471',
+      routing: '071000013', balance: 98420.75, available: 98420.75,
+      opened: 'Jan 15, 2018', status: 'Active', institution: 'PrivateSuite Private Client',
+      extras: { 'APY': '4.85%', 'Interest YTD': '$2,274.12', 'Interest Rate': '4.85% Variable' },
+    },
+    {
+      id: 'acct-inv-003', icon: '&#128200;',
+      type: 'Investment Portfolio', number: 'INV-2247-8814', fullNumber: 'INV-2247-8814',
+      routing: null, balance: 141099.00, available: 638.30,
+      opened: 'Mar 3, 2019', status: 'Active', institution: 'PrivateSuite Wealth Management',
+      extras: { 'Cash Available': '$638.30', 'YTD Return': '+18.3%', 'Benchmark': 'S&P 500' },
+    },
+    {
+      id: 'acct-crd-004', icon: '&#128179;',
+      type: 'Prestige Visa Infinite', number: '****-****-****-8812', fullNumber: '4916-0028-1947-8812',
+      routing: null, balance: -8240.32, available: 41759.68,
+      opened: 'Feb 8, 2020', status: 'Active', institution: 'PrivateSuite',
+      extras: { 'Credit Limit': '$50,000', 'Min Payment': '$145.00', 'Due Date': 'Jun 25, 2026' },
+    },
+    {
+      id: 'acct-mtg-005', icon: '&#127968;',
+      type: 'Fixed Rate Mortgage', number: 'MTG-4482-0019', fullNumber: 'MTG-4482-0019',
+      routing: null, balance: -724580.44, available: 0,
+      opened: 'Oct 18, 2022', status: 'Current', institution: 'PrivateSuite Home Lending',
+      extras: { 'Interest Rate': '3.125% Fixed', 'Monthly Payment': '$4,067.00', 'Maturity': 'January 2053', 'Original Loan': '$950,000' },
+    },
+  ];
+
+  const TRANSACTIONS = [
+    { id:'txn-001', date:'Jun 09, 2026', desc:'Payroll Deposit \u2014 Whitmore Capital Mgmt',  category:'Income',        amount:18083.33,  type:'credit', acct:'****-9023' },
+    { id:'txn-002', date:'Jun 08, 2026', desc:'Whole Foods Market \u2014 Lincoln Park',          category:'Groceries',     amount:-247.83,   type:'debit',  acct:'****-9023' },
+    { id:'txn-003', date:'Jun 07, 2026', desc:'Amazon.com \u2014 Prime Purchase',                category:'Shopping',      amount:-89.99,    type:'debit',  acct:'****-9023' },
+    { id:'txn-004', date:'Jun 07, 2026', desc:'Nobu Chicago \u2014 Restaurant',                  category:'Dining',        amount:-486.20,   type:'debit',  acct:'****-8812' },
+    { id:'txn-005', date:'Jun 06, 2026', desc:'ComEd Electric \u2014 Autopay',                   category:'Utilities',     amount:-127.45,   type:'debit',  acct:'****-9023' },
+    { id:'txn-006', date:'Jun 05, 2026', desc:'Transfer from Savings ****-4471',                 category:'Transfer',      amount:5000.00,   type:'credit', acct:'****-9023' },
+    { id:'txn-007', date:'Jun 04, 2026', desc:'Netflix \u2014 Premium Subscription',             category:'Entertainment', amount:-22.99,    type:'debit',  acct:'****-8812' },
+    { id:'txn-008', date:'Jun 04, 2026', desc:'BP \u2014 Millennium Park Gas',                   category:'Auto',          amount:-85.30,    type:'debit',  acct:'****-9023' },
+    { id:'txn-009', date:'Jun 03, 2026', desc:'Neiman Marcus \u2014 Michigan Ave',               category:'Shopping',      amount:-1240.00,  type:'debit',  acct:'****-8812' },
+    { id:'txn-010', date:'Jun 02, 2026', desc:'PrivateSuite Mortgage Autopay \u2014 MTG-4482',   category:'Mortgage',      amount:-4067.00,  type:'debit',  acct:'****-9023' },
+    { id:'txn-011', date:'Jun 01, 2026', desc:'Dividend Credit \u2014 AAPL Q2 2026',             category:'Investment',    amount:127.50,    type:'credit', acct:'INV-2247' },
+    { id:'txn-012', date:'May 31, 2026', desc:'Spotify Premium \u2014 Family Plan',              category:'Entertainment', amount:-16.99,    type:'debit',  acct:'****-8812' },
+    { id:'txn-013', date:'May 30, 2026', desc:'SoulCycle \u2014 Lincoln Park',                   category:'Health',        amount:-38.00,    type:'debit',  acct:'****-9023' },
+    { id:'txn-014', date:'May 29, 2026', desc:"Uber Black \u2014 O'Hare Airport",                category:'Transport',     amount:-94.75,    type:'debit',  acct:'****-8812' },
+    { id:'txn-015', date:'May 28, 2026', desc:'Wire Received \u2014 AHG Partners LLC',           category:'Income',        amount:25000.00,  type:'credit', acct:'****-9023' },
+    { id:'txn-016', date:'May 27, 2026', desc:"Trader Joe's \u2014 Bucktown",                    category:'Groceries',     amount:-94.22,   type:'debit',  acct:'****-9023' },
+    { id:'txn-017', date:'May 26, 2026', desc:'Delta Airlines \u2014 ORD to JFK',               category:'Travel',        amount:-487.00,   type:'debit',  acct:'****-8812' },
+    { id:'txn-018', date:'May 25, 2026', desc:'Rental Income \u2014 Unit 2B (May)',              category:'Income',        amount:2800.00,   type:'credit', acct:'****-9023' },
+  ];
+
+  const INVESTMENTS = [
+    { id:'inv-001', ticker:'AAPL',   name:'Apple Inc.',            shares:85,  price:189.50, cost:130.00, value:16107.50, gain:5057.50, gainPct:45.7 },
+    { id:'inv-002', ticker:'MSFT',   name:'Microsoft Corp.',       shares:60,  price:415.30, cost:274.00, value:24918.00, gain:8478.00, gainPct:51.4 },
+    { id:'inv-003', ticker:'SPY',    name:'SPDR S&P 500 ETF',     shares:120, price:512.80, cost:434.00, value:61536.00, gain:9456.00, gainPct:18.2 },
+    { id:'inv-004', ticker:'BRK.B',  name:'Berkshire Hathaway B', shares:45,  price:380.20, cost:299.50, value:17109.00, gain:3627.00, gainPct:26.9 },
+    { id:'inv-005', ticker:'GOOGL',  name:'Alphabet Inc.',         shares:28,  price:175.40, cost:131.70, value:4911.20,  gain:1223.60, gainPct:33.2 },
+    { id:'inv-006', ticker:'T-BILL', name:'US Treasury 3M Bills', shares:160, price:99.25,  cost:98.00,  value:15880.00, gain:200.00,  gainPct:1.3 },
+    { id:'inv-007', ticker:'CASH',   name:'Cash & Equivalents',   shares:1,   price:638.30, cost:638.30, value:638.30,   gain:0,       gainPct:0 },
+  ];
+
+  const PAYMENTS = [
+    { id:'pay-001', payee:'PrivateSuite Mortgage',       acct:'MTG-4482-0019',       amount:4067.00,  due:'Jun 15, 2026', status:'Scheduled', method:'Autopay' },
+    { id:'pay-002', payee:'IL State Estimated Tax Q2',   acct:'IL-EST-2026-Q2',       amount:12850.00, due:'Jun 15, 2026', status:'Scheduled', method:'ACH' },
+    { id:'pay-003', payee:'Progressive Insurance',       acct:'POL-8843-221',         amount:287.50,   due:'Jun 18, 2026', status:'Pending',   method:'ACH' },
+    { id:'pay-004', payee:'ComEd Utilities',             acct:'0471-882-3310',         amount:145.00,   due:'Jun 20, 2026', status:'Pending',   method:'Autopay' },
+    { id:'pay-005', payee:'Prestige Visa Minimum',       acct:'****-8812',            amount:145.00,   due:'Jun 25, 2026', status:'Upcoming',  method:'Manual' },
+    { id:'pay-006', payee:'Spotify Premium',             acct:'SPOTF-FMLY-4821',      amount:16.99,    due:'Jun 30, 2026', status:'Upcoming',  method:'Autopay' },
+    { id:'pay-007', payee:'Property Tax \u2014 Cook County', acct:'14-28-302-044-0000', amount:8420.00, due:'Jul 1, 2026',  status:'Upcoming',  method:'Manual' },
+  ];
+
+  const COMPLETED_PAYMENTS = [
+    { date:'Jun 02, 2026', payee:'PrivateSuite Mortgage', amount:4067.00,  method:'Autopay', ref:'REF-0047-MTG-0602' },
+    { date:'May 20, 2026', payee:'ComEd Utilities',        amount:139.82,   method:'Autopay', ref:'REF-0047-COM-0520' },
+    { date:'May 15, 2026', payee:'PrivateSuite Mortgage', amount:4067.00,  method:'Autopay', ref:'REF-0047-MTG-0515' },
+    { date:'May 12, 2026', payee:'Progressive Ins.',       amount:287.50,   method:'ACH',     ref:'REF-0047-INS-0512' },
+    { date:'Apr 15, 2026', payee:'PrivateSuite Mortgage', amount:4067.00,  method:'Autopay', ref:'REF-0047-MTG-0415' },
+    { date:'Apr 01, 2026', payee:'Cook County Tax',        amount:8420.00,  method:'Wire',    ref:'REF-0047-TAX-0401' },
+    { date:'Mar 15, 2026', payee:'PrivateSuite Mortgage', amount:4067.00,  method:'Autopay', ref:'REF-0047-MTG-0315' },
+    { date:'Mar 01, 2026', payee:'IL Est. Tax Q1',         amount:12850.00, method:'ACH',     ref:'REF-0047-ILQ1-0301' },
+  ];
+
+  /* ════════════════════════════════════════════════════════════════════════════
+     HELPERS
+  ════════════════════════════════════════════════════════════════════════════ */
+
+  function fmt(n) {
+    return n.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+  }
+
+  function buildTable(headers, rows, opts) {
+    const { rightCols = [], monoCols = [], tones = [] } = opts || {};
+    let h = '<table class="data-tbl"><thead><tr>';
+    headers.forEach((hdr, i) => {
+      h += `<th class="${rightCols.includes(i) ? 'col-r' : ''}">${hdr}</th>`;
+    });
+    h += '</tr></thead><tbody>';
+    rows.forEach((row, ri) => {
+      const stripe = ri % 2 === 1 ? 'row-stripe' : '';
+      h += `<tr class="${stripe}">`;
+      row.forEach((cell, ci) => {
+        const cls = [(rightCols.includes(ci) ? 'col-r' : ''), (monoCols.includes(ci) ? 'font-mono' : '')].filter(Boolean).join(' ');
+        let content = cell;
+        if (ci === 0 && tones[ri]) content = `<span class="tone-dot dot-${tones[ri]}"></span>${cell}`;
+        h += `<td class="${cls}">${content}</td>`;
+      });
+      h += '</tr>';
+    });
+    h += '</tbody></table>';
+    return h;
+  }
+
+  function statCard(value, label, colorClass) {
+    return `<div class="stat-card"><div class="stat-value ${colorClass || ''}">${value}</div><div class="stat-label">${label}</div></div>`;
+  }
+
+  function infoField(label, value, extraClass) {
+    return `<div class="info-field"><div class="info-lbl">${label}</div><div class="info-val ${extraClass || ''}">${value}</div></div>`;
+  }
+
+  /* ════════════════════════════════════════════════════════════════════════════
+     SENSITIVE DATA TOGGLE
+  ════════════════════════════════════════════════════════════════════════════ */
+
+  let sensitiveVisible = false;
+
+  function toggleSensitive() {
+    sensitiveVisible = !sensitiveVisible;
+    const btn = document.getElementById('btn-sensitive-toggle');
+    btn.classList.toggle('active-state', sensitiveVisible);
+    btn.textContent = sensitiveVisible ? '\uD83D\uDE48 Hide Sensitive' : '\uD83D\uDC41 Reveal Sensitive';
+    renderAccounts();
+    renderProfile();
+  }
+
+  /* ════════════════════════════════════════════════════════════════════════════
+     NAVIGATION
+  ════════════════════════════════════════════════════════════════════════════ */
+
+  const chartsDrawn = new Set();
+
+  function goTo(id) {
+    document.querySelectorAll('.page-section').forEach(s => s.classList.remove('is-active'));
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('is-active'));
+    document.getElementById('section-' + id).classList.add('is-active');
+    const tab = document.querySelector(`.nav-tab[data-section="${id}"]`);
+    if (tab) tab.classList.add('is-active');
+    if (id === 'dashboard'   && !chartsDrawn.has('db'))   { chartsDrawn.add('db');   setTimeout(drawDashboardCharts, 60); }
+    if (id === 'investments' && !chartsDrawn.has('inv'))  { chartsDrawn.add('inv');  setTimeout(drawInvestmentCharts, 60); }
+    window.scrollTo(0, 0);
+  }
+
+  /* ════════════════════════════════════════════════════════════════════════════
+     DROPDOWNS
+  ════════════════════════════════════════════════════════════════════════════ */
+
+  function toggleDropdown(id) {
+    const el = document.getElementById(id);
+    const was = el.classList.contains('is-open');
+    closeAllDropdowns();
+    if (!was) el.classList.add('is-open');
+  }
+
+  function closeAllDropdowns() {
+    document.querySelectorAll('.dropdown.is-open').forEach(d => d.classList.remove('is-open'));
+  }
+
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.dropdown')) closeAllDropdowns();
+  });
+
+  /* ════════════════════════════════════════════════════════════════════════════
+     COLLAPSIBLES
+  ════════════════════════════════════════════════════════════════════════════ */
+
+  function toggleAcctCard(id) {
+    document.getElementById(id).classList.toggle('is-open');
+  }
+
+  function toggleProfCard(id) {
+    document.getElementById(id).classList.toggle('is-open');
+  }
+
+  /* ════════════════════════════════════════════════════════════════════════════
+     RENDER: DASHBOARD
+  ════════════════════════════════════════════════════════════════════════════ */
+
+  function renderDashboard() {
+    const assets = ACCOUNTS.filter(a => a.balance > 0).reduce((s,a) => s + a.balance, 0);
+    const liabs  = Math.abs(ACCOUNTS.filter(a => a.balance < 0).reduce((s,a) => s + a.balance, 0));
+    const net    = assets - liabs;
+
+    document.getElementById('dashboard-stat-row').innerHTML =
+      statCard(fmt(net),    'Net Worth',           'clr-green') +
+      statCard(fmt(assets), 'Total Assets',        '') +
+      statCard(fmt(liabs),  'Total Liabilities',   'clr-red') +
+      statCard('812',       'FICO 8 Credit Score', 'clr-green');
+
+    document.getElementById('dashboard-acct-tbl').innerHTML = buildTable(
+      ['Account Number', 'Type', 'Institution', 'Balance', 'Available', 'Status'],
+      ACCOUNTS.map(a => [
+        `<span class="font-mono">${a.number}</span>`,
+        a.type, a.institution, fmt(a.balance), fmt(a.available),
+        `<span class="badge ${a.balance < 0 ? 'badge-neutral' : 'badge-green'}">${a.status}</span>`,
+      ]),
+      { rightCols: [3,4], tones: ACCOUNTS.map(a => a.balance < 0 ? 'red' : 'green') }
+    );
+
+    document.getElementById('dashboard-txn-tbl').innerHTML = buildTable(
+      ['Date','Description','Category','Account','Amount'],
+      TRANSACTIONS.slice(0,7).map(t => [
+        t.date, t.desc, t.category,
+        `<span class="font-mono">${t.acct}</span>`,
+        `<span class="${t.type === 'credit' ? 'amt-up' : ''}">${fmt(t.amount)}</span>`,
+      ]),
+      { rightCols: [4], tones: TRANSACTIONS.slice(0,7).map(t => t.type === 'credit' ? 'green' : '') }
+    );
+  }
+
+  function drawDashboardCharts() {
+    const cfCtx = document.getElementById('chart-cashflow').getContext('2d');
+    new Chart(cfCtx, {
+      type: 'line',
+      data: {
+        labels: ['Jan','Feb','Mar','Apr','May','Jun'],
+        datasets: [
+          { label:'Income',   data:[43166,18083,43166,18083,48083,45883], borderColor:'#087852', backgroundColor:'rgba(8,120,82,.07)', fill:true, tension:.4, pointRadius:4, pointBackgroundColor:'#087852' },
+          { label:'Expenses', data:[12480, 9240,15920,11780, 6520, 7290], borderColor:'#be1e2d', backgroundColor:'rgba(190,30,45,.05)', fill:true, tension:.4, pointRadius:4, pointBackgroundColor:'#be1e2d' },
+        ],
+      },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{ position:'top', labels:{ boxWidth:10, font:{size:11} } } },
+        scales:{
+          y:{ ticks:{ callback: v => '$'+(v/1000).toFixed(0)+'k', font:{size:11} }, grid:{color:'#ecf0f9'} },
+          x:{ ticks:{ font:{size:11} }, grid:{display:false} },
+        },
+      },
+    });
+
+    const spCtx = document.getElementById('chart-spending').getContext('2d');
+    new Chart(spCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Mortgage','Shopping','Travel','Dining','Groceries','Utilities','Other'],
+        datasets: [{ data:[4067,1329.99,487,486.20,342.05,127.45,218.05], backgroundColor:['#1741a8','#2155c4','#3570e0','#5090f4','#7cb0ff','#afd0ff','#d8ebff'], borderWidth:2, borderColor:'#fff' }],
+      },
+      options: { responsive:true, maintainAspectRatio:false, cutout:'62%', plugins:{ legend:{ position:'bottom', labels:{ boxWidth:10, font:{size:10}, padding:6 } } } },
+    });
+  }
+
+  /* ════════════════════════════════════════════════════════════════════════════
+     RENDER: ACCOUNTS
+  ════════════════════════════════════════════════════════════════════════════ */
+
+  function renderAccounts() {
+    const list = document.getElementById('accounts-cards-list');
+    list.innerHTML = ACCOUNTS.map(a => {
+      const neg    = a.balance < 0;
+      const dispNum = a.fullNumber && a.fullNumber !== a.number && sensitiveVisible ? a.fullNumber : a.number;
+      const extras = Object.entries(a.extras || {}).map(([k,v]) => `
+        <div class="acct-meta-item">
+          <div class="acct-meta-label">${k}</div>
+          <div class="acct-meta-value">${v}</div>
+        </div>`).join('');
+
+      return `
+        <div class="acct-card is-open" id="${a.id}">
+          <div class="acct-card-hd" onclick="toggleAcctCard('${a.id}')">
+            <div class="acct-icon-bubble">${a.icon}</div>
+            <div class="acct-hd-info">
+              <div class="acct-hd-type">${a.type}</div>
+              <div class="acct-hd-num">${a.number} &middot; ${a.institution}</div>
+            </div>
+            <div class="acct-hd-right">
+              <span class="badge ${a.status === 'Active' || a.status === 'Current' ? 'badge-green':'badge-neutral'}">${a.status}</span>
+              <span class="acct-hd-balance ${neg ? 'acct-hd-bal-neg':''}">${fmt(a.balance)}</span>
+              <span class="acct-chevron">&#9660;</span>
+            </div>
+          </div>
+          <div class="acct-card-body">
+            <div class="stat-row cols-3" style="margin-bottom:16px">
+              ${statCard(fmt(a.balance),    'Current Balance',   neg ? 'clr-red':'clr-green')}
+              ${statCard(fmt(a.available),  'Available Balance', '')}
+              ${statCard(a.status,          'Account Status',    'clr-blue')}
+            </div>
+            <div class="acct-meta-grid">
+              <div class="acct-meta-item">
+                <div class="acct-meta-label">Account Number</div>
+                <div class="acct-meta-value v-mono">${dispNum}</div>
+              </div>
+              ${a.routing ? `<div class="acct-meta-item"><div class="acct-meta-label">ABA Routing</div><div class="acct-meta-value v-mono">${a.routing}</div></div>` : ''}
+              <div class="acct-meta-item">
+                <div class="acct-meta-label">Opened</div>
+                <div class="acct-meta-value">${a.opened}</div>
+              </div>
+              <div class="acct-meta-item">
+                <div class="acct-meta-label">Institution</div>
+                <div class="acct-meta-value">${a.institution}</div>
+              </div>
+              ${extras}
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  /* ════════════════════════════════════════════════════════════════════════════
+     RENDER: TRANSACTIONS
+  ════════════════════════════════════════════════════════════════════════════ */
+
+  const TXN_CATS = ['All','Income','Shopping','Dining','Groceries','Utilities','Entertainment','Travel','Mortgage','Transfer','Investment','Health','Transport','Auto'];
+  let activeTxnFilter = 'All';
+
+  function renderTransactions() {
+    document.getElementById('txn-filter-pills').innerHTML = TXN_CATS.map(c =>
+      `<button class="f-pill ${c === activeTxnFilter ? 'selected':''}" data-cat="${c}" onclick="setTxnFilter('${c}')">${c}</button>`
+    ).join('');
+
+    const rows = activeTxnFilter === 'All' ? TRANSACTIONS : TRANSACTIONS.filter(t => t.category === activeTxnFilter);
+    const inflow  = rows.filter(t => t.type === 'credit').reduce((s,t) => s + t.amount, 0);
+    const outflow = Math.abs(rows.filter(t => t.type === 'debit').reduce((s,t) => s + t.amount, 0));
+    const net     = inflow - outflow;
+
+    document.getElementById('txn-stat-row').innerHTML =
+      statCard(fmt(inflow),  'Total Inflows',  'clr-green') +
+      statCard(fmt(outflow), 'Total Outflows', 'clr-red') +
+      statCard(fmt(net),     'Net Cash Flow',  net >= 0 ? 'clr-green':'clr-red');
+
+    document.getElementById('txn-table-frame').innerHTML = buildTable(
+      ['Date','Description','Category','Account','Amount'],
+      rows.map(t => [
+        t.date, t.desc, t.category,
+        `<span class="font-mono">${t.acct}</span>`,
+        `<span class="${t.type === 'credit' ? 'amt-up':''}">${fmt(t.amount)}</span>`,
+      ]),
+      { rightCols:[4], tones: rows.map(t => t.type === 'credit' ? 'green' : '') }
+    );
+  }
+
+  function setTxnFilter(cat) {
+    activeTxnFilter = cat;
+    renderTransactions();
+  }
+
+  /* ════════════════════════════════════════════════════════════════════════════
+     RENDER: INVESTMENTS
+  ════════════════════════════════════════════════════════════════════════════ */
+
+  function renderInvestments() {
+    const totalVal  = INVESTMENTS.reduce((s,i) => s + i.value, 0);
+    const totalCost = INVESTMENTS.reduce((s,i) => s + i.shares * i.cost, 0);
+    const totalGain = totalVal - totalCost;
+    const totalPct  = ((totalGain / totalCost) * 100).toFixed(1);
+
+    document.getElementById('invest-stat-row').innerHTML =
+      statCard(fmt(totalVal),  'Total Portfolio Value', '') +
+      statCard(fmt(totalGain), 'Unrealized Gain',       'clr-green') +
+      statCard(totalPct + '%', 'Total Return',          'clr-green') +
+      statCard(USER.riskTolerance, 'Risk Profile',      '');
+
+    document.getElementById('invest-holdings-tbl').innerHTML = buildTable(
+      ['Ticker','Name','Shares','Price','Cost Basis','Market Value','Gain / Loss','Return'],
+      INVESTMENTS.map(i => [
+        `<strong>${i.ticker}</strong>`, i.name, i.shares,
+        `$${i.price.toFixed(2)}`, `$${i.cost.toFixed(2)}`,
+        fmt(i.value),
+        `<span class="${i.gain > 0 ? 'amt-up':''}">${fmt(i.gain)}</span>`,
+        `<span class="${i.gain > 0 ? 'amt-up':''}">${i.gainPct.toFixed(1)}%</span>`,
+      ]),
+      { rightCols:[2,3,4,5,6,7], tones: INVESTMENTS.map(i => i.gain > 0 ? 'green' : i.gain < 0 ? 'red':'neutral') }
+    );
+  }
+
+  function drawInvestmentCharts() {
+    const allocCtx = document.getElementById('chart-allocation').getContext('2d');
+    new Chart(allocCtx, {
+      type: 'doughnut',
+      data: {
+        labels: INVESTMENTS.map(i => i.ticker),
+        datasets: [{ data: INVESTMENTS.map(i => i.value), backgroundColor:['#1741a8','#2052c0','#3068d8','#4a84ef','#6fa3ff','#9dc5ff','#cce0ff'], borderWidth:2, borderColor:'#fff' }],
+      },
+      options: { responsive:true, maintainAspectRatio:false, cutout:'55%', plugins:{ legend:{ position:'bottom', labels:{ boxWidth:10, font:{size:10}, padding:5 } } } },
+    });
+
+    const ytdCtx = document.getElementById('chart-portfolio-ytd').getContext('2d');
+    new Chart(ytdCtx, {
+      type: 'bar',
+      data: {
+        labels: ['Jan','Feb','Mar','Apr','May','Jun'],
+        datasets: [{ label:'Portfolio Value', data:[119400,124800,131200,127600,138400,141099], backgroundColor:'#1741a8', borderRadius:5 }],
+      },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{display:false} },
+        scales:{
+          y:{ ticks:{ callback: v => '$'+(v/1000).toFixed(0)+'k', font:{size:11} }, grid:{color:'#ecf0f9'}, min:110000 },
+          x:{ ticks:{ font:{size:11} }, grid:{display:false} },
+        },
+      },
+    });
+  }
+
+  /* ════════════════════════════════════════════════════════════════════════════
+     RENDER: PAYMENTS
+  ════════════════════════════════════════════════════════════════════════════ */
+
+  function renderPayments() {
+    const total     = PAYMENTS.reduce((s,p) => s + p.amount, 0);
+    const auto      = PAYMENTS.filter(p => p.method !== 'Manual').reduce((s,p) => s + p.amount, 0);
+    const manual    = PAYMENTS.filter(p => p.method === 'Manual').reduce((s,p) => s + p.amount, 0);
+    const toneMap   = { Scheduled:'green', Pending:'amber', Upcoming:'neutral' };
+    const badgeMap  = { Scheduled:'badge-green', Pending:'badge-amber', Upcoming:'badge-neutral' };
+
+    document.getElementById('payments-stat-row').innerHTML =
+      statCard(fmt(total),  'Total Due (Jun \u2013 Jul)', 'clr-red') +
+      statCard(fmt(auto),   'Auto-Scheduled',             'clr-green') +
+      statCard(fmt(manual), 'Manual Action Required',     'clr-amber');
+
+    document.getElementById('upcoming-pay-tbl').innerHTML = buildTable(
+      ['Payee','Reference / Account','Amount','Due Date','Method','Status'],
+      PAYMENTS.map(p => [
+        p.payee,
+        `<span class="font-mono">${p.acct}</span>`,
+        fmt(p.amount), p.due, p.method,
+        `<span class="badge ${badgeMap[p.status] || 'badge-neutral'}">${p.status}</span>`,
+      ]),
+      { rightCols:[2], tones: PAYMENTS.map(p => toneMap[p.status] || 'neutral') }
+    );
+
+    document.getElementById('completed-pay-tbl').innerHTML = buildTable(
+      ['Completed','Payee','Amount','Method','Confirmation Ref'],
+      COMPLETED_PAYMENTS.map(p => [
+        p.date, p.payee, fmt(p.amount), p.method,
+        `<span class="font-mono" style="font-size:11px">${p.ref}</span>`,
+      ]),
+      { rightCols:[2], tones: COMPLETED_PAYMENTS.map(() => 'green') }
+    );
+  }
+
+  /* ════════════════════════════════════════════════════════════════════════════
+     RENDER: PROFILE
+  ════════════════════════════════════════════════════════════════════════════ */
+
+  function renderProfile() {
+    const s = sensitiveVisible;
+
+    document.getElementById('prof-personal-grid').innerHTML = [
+      infoField('Full Legal Name',     USER.name,                                                     'v-large'),
+      infoField('Date of Birth',       s ? USER.dob        : USER.dobMasked,                          'v-mono'),
+      infoField('Age',                 USER.age),
+      infoField('Social Security No.', s ? USER.ssnFull    : USER.ssn,                                'v-mono'),
+      infoField("Driver's License",    s ? USER.driversLicense : USER.dlMasked,                       'v-mono'),
+      infoField('Passport',            s ? USER.passport   : USER.passportMasked,                     'v-mono'),
+      infoField('Primary Phone',       `<a href="tel:${USER.phone}">${USER.phone}</a>`),
+      infoField('Alternate Phone',     `<a href="tel:${USER.altPhone}">${USER.altPhone}</a>`),
+      infoField('Email',               `<a href="mailto:${USER.email}">${USER.email}</a>`),
+      infoField('Primary Address',     USER.address),
+      infoField('City / State / ZIP',  USER.city),
+      infoField('Country',             USER.country),
+    ].join('');
+
+    document.getElementById('prof-employment-grid').innerHTML = [
+      infoField('Employer',           USER.employer),
+      infoField('Employment Status',  USER.employment),
+      infoField('Employer Phone',     `<a href="tel:${USER.employerPhone}">${USER.employerPhone}</a>`),
+      infoField('Business Address',   USER.employerAddr),
+      infoField('Annual Income',      s ? USER.income       : USER.incomeMasked,   'v-large v-mono'),
+      infoField('Tax Bracket',        USER.taxBracket),
+      infoField('Filing Status',      USER.filingStatus),
+      infoField('Spouse / Co-Owner',  USER.spouseName),
+      infoField('Spouse SSN',         s ? USER.spouseSSNFull : USER.spouseSSN,     'v-mono'),
+      infoField('Dependents',         USER.dependents),
+      infoField('Stated Net Worth',   s ? USER.netWorth     : USER.netWorthMasked, 'v-large v-mono'),
+      infoField('FICO 8 Score',       `${USER.creditScore} \u2014 Exceptional`,    'v-large'),
+    ].join('');
+
+    document.getElementById('prof-advisor-grid').innerHTML = [
+      infoField('Relationship Manager', USER.advisorName,                                              'v-large'),
+      infoField('Advisor Phone',        `<a href="tel:${USER.advisorPhone}">${USER.advisorPhone}</a>`),
+      infoField('Advisor Email',        `<a href="mailto:${USER.advisorEmail}">${USER.advisorEmail}</a>`),
+      infoField('Branch Location',      'PrivateSuite Private Client &middot; 21 S. Clark St, Chicago'),
+      infoField('Next Annual Review',   'September 15, 2026'),
+      infoField('Account Tier',         'Private Banking \u2014 Platinum',                             'v-large'),
+      infoField('Risk Tolerance',       USER.riskTolerance),
+      infoField('Statement Delivery',   'Electronic (Paperless)'),
+      infoField('2FA Enabled',          'Yes \u2014 SMS + Authenticator App'),
+    ].join('');
+  }
+
+  /* ════════════════════════════════════════════════════════════════════════════
+     INIT
+  ════════════════════════════════════════════════════════════════════════════ */
+
+  document.addEventListener('DOMContentLoaded', function () {
+    renderDashboard();
+    renderAccounts();
+    renderTransactions();
+    renderInvestments();
+    renderPayments();
+    renderProfile();
+    setTimeout(drawDashboardCharts, 100);
+    chartsDrawn.add('db');
+  });
+</script>
+</body>
+</html>
